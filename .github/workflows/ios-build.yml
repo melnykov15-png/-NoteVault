@@ -31,6 +31,22 @@ jobs:
       - name: Test on iOS simulator
         run: |
           xcodebuild test -project NoteVault.xcodeproj -scheme NoteVault -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO
+      - name: Capture actual app screenshot
+        run: |
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -path '*/Debug-iphonesimulator/NoteVault.app' -type d -print -quit)
+          test -n "$APP"
+          xcrun simctl install "$SIMULATOR_ID" "$APP"
+          xcrun simctl status_bar "$SIMULATOR_ID" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
+          xcrun simctl launch "$SIMULATOR_ID" org.notevault.local
+          sleep 5
+          mkdir -p screenshots
+          xcrun simctl io "$SIMULATOR_ID" screenshot screenshots/NoteVault-home.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NoteVault-real-simulator-screenshot
+          path: screenshots/NoteVault-home.png
+          retention-days: 1
       - name: Build unsigned device application
         run: |
           xcodebuild build -project NoteVault.xcodeproj -scheme NoteVault -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
@@ -53,4 +69,5 @@ jobs:
           path: TestResults.xcresult
           retention-days: 1
           if-no-files-found: ignore
+
 
