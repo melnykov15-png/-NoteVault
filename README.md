@@ -32,6 +32,6 @@ App — композиция зависимостей и навигация; Des
 
 ## Проверки и статус
 
-См. PROJECT_PROGRESS.md. Здесь Windows без Xcode и iOS SDK: компиляция, XCTest и внешний вид на устройстве не подтверждены. Workflow подготовлен, но не запущен: GitHub-репозиторий пользователем пока не указан. Установка на iPhone не выполнялась.
+25.10.2026 проект загружен в https://github.com/melnykov15-png/-NoteVault. GitHub Actions на macos-15 / Xcode 16.4 успешно выполнил 7 XCTest (0 ошибок) и Release-сборку для iPhone. Неподписанный IPA создан и скачан на Windows. Запуск: https://github.com/melnykov15-png/-NoteVault/actions/runs/40147786994. Подпись, установка на iPhone и визуальная проверка не выполнялись. См. PROJECT_PROGRESS.md.
 
 Перегенерация проекта при добавлении Swift-файлов: `node Scripts/generate-project.cjs`. Node нужен только для этой служебной операции; для сборки существующего проекта не нужен. Никаких сторонних библиотек приложение не использует.
