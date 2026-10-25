@@ -1,0 +1,38 @@
+name: Capture NoteVault preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/preview.yml']
+permissions:
+  contents: read
+jobs:
+  preview:
+    if: github.event.repository.private == false
+    runs-on: macos-15
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Boot one simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for k,v in d["devices"].items() if "iOS" in k for x in v if "iPhone" in x["name"]))')
+          echo "SIMULATOR_ID=$DEVICE" >> "$GITHUB_ENV"
+          xcrun simctl boot "$DEVICE"
+      - name: Build simulator application
+        run: |
+          xcodebuild build -project NoteVault.xcodeproj -scheme NoteVault -configuration Debug -sdk iphonesimulator -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath preview-build CODE_SIGNING_ALLOWED=NO
+      - name: Launch and capture
+        timeout-minutes: 4
+        run: |
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcrun simctl install "$SIMULATOR_ID" preview-build/Build/Products/Debug-iphonesimulator/NoteVault.app
+          xcrun simctl status_bar "$SIMULATOR_ID" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
+          xcrun simctl launch "$SIMULATOR_ID" org.notevault.local
+          sleep 5
+          mkdir -p screenshots
+          xcrun simctl io "$SIMULATOR_ID" screenshot screenshots/NoteVault-home.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NoteVault-real-simulator-screenshot
+          path: screenshots/NoteVault-home.png
+          retention-days: 1
